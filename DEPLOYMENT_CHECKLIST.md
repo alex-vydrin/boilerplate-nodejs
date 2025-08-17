@@ -82,7 +82,7 @@ This checklist covers all the code requirements needed to deploy your applicatio
 
 ### 13. **Platform Configuration** ✅
 
-- [x] `Procfile` - Heroku deployment
+- [x] `railway.toml` - Railway deployment
 - [x] `railway.json` - Railway deployment (auto-generated)
 - [x] `vercel.json` - Vercel deployment (if needed)
 
@@ -95,7 +95,7 @@ This checklist covers all the code requirements needed to deploy your applicatio
 ### 15. **Documentation** ✅
 
 - [x] `README.md` - Project overview and setup
-- [x] `HEROKU_DEPLOYMENT.md` - Heroku-specific guide
+- [x] `RAILWAY_DEPLOYMENT.md` - Railway-specific guide
 - [x] `DEPLOYMENT_CHECKLIST.md` - This checklist
 
 ## 🔧 Optional Additions (Ready to Add)
@@ -151,7 +151,7 @@ Your application is **production-ready** and includes:
 
 ### **Deployment Support:**
 
-- ✅ Heroku deployment
+- ✅ Railway deployment
 - ✅ Railway deployment
 - ✅ Vercel deployment
 - ✅ Docker deployment
@@ -174,12 +174,15 @@ railway init
 railway up
 ```
 
-### **Heroku:**
+### **Railway:**
 
 ```bash
-heroku create your-app-name
-git push heroku main
-heroku open
+# Connect your GitHub repository to Railway
+# Railway will automatically deploy on push
+# Or use Railway CLI:
+railway login
+railway link
+railway up
 ```
 
 ### **Vercel:**

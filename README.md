@@ -219,51 +219,45 @@ docker build --target production -t my-app .
 docker run -p 3000:3000 my-app
 ```
 
-### Heroku Deployment
+### Railway Deployment
 
-This project is ready for Heroku deployment!
+This project is ready for Railway deployment!
 
 #### Quick Deploy
 
 ```bash
-# Install Heroku CLI and login
-heroku login
-
-# Deploy using the provided script
-./deploy-heroku.sh
-
-# Or deploy manually
-heroku create your-app-name
-git push heroku main
-heroku open
+# Connect your GitHub repository to Railway
+# Railway will automatically deploy on push
+# Or use Railway CLI:
+npm install -g @railway/cli
+railway login
+railway link
+railway up
 ```
 
 #### Manual Deployment
 
-1. **Install Heroku CLI**: [Installation Guide](https://devcenter.heroku.com/articles/heroku-cli)
-2. **Login**: `heroku login`
-3. **Create App**: `heroku create your-app-name`
-4. **Deploy**: `git push heroku main`
-5. **Open**: `heroku open`
+1. **Connect Repository**: Go to [Railway Dashboard](https://railway.app/dashboard)
+2. **Create Project**: Click "New Project" → "Deploy from GitHub repo"
+3. **Select Repository**: Choose your repository
+4. **Deploy**: Railway will automatically deploy on push
 
 #### Environment Variables
 
+Railway automatically provides necessary environment variables:
+
+- `PORT` - Automatically assigned by Railway
+- `NODE_ENV` - Set to "production" in production environments
+
+#### Database Setup
+
 ```bash
-heroku config:set NODE_ENV=production
-heroku config:set LOG_LEVEL=info
+# In Railway Dashboard:
+# 1. Go to "New" → "Database" → "PostgreSQL"
+# 2. Railway will provide DATABASE_URL automatically
 ```
 
-#### Addons (Optional)
-
-```bash
-# Add Redis
-heroku addons:create heroku-redis:hobby-dev
-
-# Add PostgreSQL
-heroku addons:create heroku-postgresql:hobby-dev
-```
-
-📖 **Detailed Heroku Guide**: See [HEROKU_DEPLOYMENT.md](./HEROKU_DEPLOYMENT.md) for comprehensive deployment instructions.
+📖 **Detailed Railway Guide**: See [RAILWAY_DEPLOYMENT.md](./RAILWAY_DEPLOYMENT.md) for comprehensive deployment instructions.
 
 ## Contributing
 

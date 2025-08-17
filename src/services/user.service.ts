@@ -123,7 +123,8 @@ export class UserService {
             return null;
         }
 
-        const { password, ...userWithoutPassword } = user;
+        // eslint-disable-next-line no-unused-vars
+        const { password: _password, ...userWithoutPassword } = user;
         return userWithoutPassword as User;
     }
 

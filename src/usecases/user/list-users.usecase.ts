@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { IUseCase, UseCaseResult } from "../../interfaces/usecase.interface";
 import {
     IPaginatedRepository,
@@ -88,7 +89,8 @@ export class ListUsersUseCase
 
                 result = {
                     data: paginatedUsers.map((user: User) => {
-                        const { password, ...userWithoutPassword } = user;
+                        const { password: _password, ...userWithoutPassword } =
+                            user;
                         return userWithoutPassword as User;
                     }),
                     meta: {
@@ -107,7 +109,8 @@ export class ListUsersUseCase
 
                 // Remove passwords from response
                 result.data = result.data.map((user: User) => {
-                    const { password, ...userWithoutPassword } = user;
+                    const { password: _password, ...userWithoutPassword } =
+                        user;
                     return userWithoutPassword as User;
                 });
             }

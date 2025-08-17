@@ -28,7 +28,8 @@ export const config = {
 
 // Validate required environment variables
 export const validateEnv = () => {
-    const required = ["NODE_ENV", "PORT"];
+    // Only validate PORT, NODE_ENV has a default value
+    const required = ["PORT"];
 
     const missing = required.filter((key) => !process.env[key]);
 
@@ -44,6 +45,8 @@ export const validateEnv = () => {
     }
 
     console.log("✅ Environment validation passed");
+    console.log(`🌍 Environment: ${config.NODE_ENV}`);
+    console.log(`🚀 Port: ${config.PORT}`);
 };
 
 // Validate environment on import

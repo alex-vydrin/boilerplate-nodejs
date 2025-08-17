@@ -6,21 +6,19 @@ WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
-COPY yarn.lock* ./
+COPY yarn.lock ./
 
-# Install dependencies
-RUN yarn install --frozen-lockfile --production && yarn cache clean
+# Install all dependencies (including devDependencies for build)
+RUN yarn install
 
 # Development stage
 FROM base AS development
-RUN yarn install --frozen-lockfile
 COPY . .
 EXPOSE 3000
-CMD ["yarn", "dev"]
+CMD ["yarn", "dev:local"]
 
 # Build stage
 FROM base AS build
-RUN yarn install --frozen-lockfile
 COPY . .
 RUN yarn build
 
@@ -32,10 +30,15 @@ WORKDIR /app
 RUN addgroup -g 1001 -S nodejs
 RUN adduser -S nodejs -u 1001
 
+# Copy package files for production dependencies
+COPY package*.json ./
+COPY yarn.lock ./
+
+# Install only production dependencies
+RUN yarn install --production && yarn cache clean
+
 # Copy built application
 COPY --from=build --chown=nodejs:nodejs /app/dist ./dist
-COPY --from=build --chown=nodejs:nodejs /app/package*.json ./
-COPY --from=build --chown=nodejs:nodejs /app/yarn.lock ./
 
 # Switch to non-root user
 USER nodejs
