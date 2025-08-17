@@ -1,0 +1,7 @@
+---
+alwaysApply: true
+---
+
+1. Before writing any code, come up with an extremely good plan, review the plan, and then ask the user for permission to execute the plan. Do not start execution until you get the user approval.
+2. After you have executed the plan, run: `yarn lint` and `yarn tsc`
+3. If there are any linting errors, run `yarn lint-fix`

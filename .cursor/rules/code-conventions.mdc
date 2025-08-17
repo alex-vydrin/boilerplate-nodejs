@@ -1,0 +1,17 @@
+---
+globs: **/*.ts
+alwaysApply: false
+---
+
+## Technologies used
+
+- **TypeScript** - Full type safety across all packages
+- **ESLint & Prettier** - Code quality tools configured and ready to use
+
+# Code Conventions
+
+When writing or modifying code in this project, please adhere to the following conventions:
+
+1.  **TypeScript Best Practices**: Follow standard, idiomatic TypeScript coding practices for structure, naming, and types, unless otherwise overridden.
+2.  **Minimal Comments**: Avoid adding comments unless they explain complex logic or non-obvious decisions. Well-written, self-explanatory code is preferred. Do not add comments that merely restate what the code does.
+3.  **File naming conventions**: Use kebab-case when naming directories, TypeScript, and other files.
