@@ -1,27 +1,26 @@
 export interface User {
-    id: string;
+    id: number;
     email: string;
     name: string;
-    password?: string;
     isActive: boolean;
     createdAt: Date;
     updatedAt: Date;
 }
 
-export interface CreateUserRequest {
+export interface CreateUserParams {
     email: string;
     name: string;
-    password: string;
+    password?: string;
 }
 
-export interface UpdateUserRequest {
-    name?: string;
+export interface UpdateUserParams {
     email?: string;
+    name?: string;
     isActive?: boolean;
 }
 
 export interface UserFilters {
-    isActive?: boolean | undefined;
-    email?: string | undefined;
-    name?: string | undefined;
+    isActive?: boolean;
+    email?: string;
+    name?: string;
 }

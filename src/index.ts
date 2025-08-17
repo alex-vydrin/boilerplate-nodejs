@@ -10,6 +10,8 @@ import { generalLimiter } from "./middleware/rate-limiter";
 import { healthRouter } from "./routes/health";
 import { exampleRouter } from "./routes/example";
 import { usersRouter } from "./routes/users";
+import { testKnexConnection } from "./config/knex";
+import { logger } from "./utils/logger";
 
 // Validate environment variables
 validateEnv();
@@ -39,30 +41,56 @@ app.use("/users", usersRouter);
 app.use(notFoundHandler);
 app.use(errorHandler);
 
-// Start server
-const server = app.listen(config.PORT, () => {
-    console.log(`🚀 Server running on port ${config.PORT}`);
-    console.log(`🌍 Environment: ${config.NODE_ENV}`);
-    console.log(
-        `📊 Health check available at http://localhost:${config.PORT}/health`,
-    );
-});
+// Initialize database and start server
+async function startServer() {
+    try {
+        // Test database connection
+        if (config.DATABASE_URL) {
+            const dbConnected = await testKnexConnection();
+            if (dbConnected) {
+                logger.info("Database initialized successfully");
+            } else {
+                logger.warn(
+                    "Database connection failed, using in-memory storage",
+                );
+            }
+        } else {
+            logger.info("No DATABASE_URL provided, using in-memory storage");
+        }
 
-// Graceful shutdown
-process.on("SIGTERM", () => {
-    console.log("SIGTERM received, shutting down gracefully");
-    server.close(() => {
-        console.log("Process terminated");
-        process.exit(0);
-    });
-});
+        // Start server
+        const server = app.listen(config.PORT, () => {
+            console.log(`🚀 Server running on port ${config.PORT}`);
+            console.log(`🌍 Environment: ${config.NODE_ENV}`);
+            console.log(
+                `📊 Health check available at http://localhost:${config.PORT}/health`,
+            );
+        });
 
-process.on("SIGINT", () => {
-    console.log("SIGINT received, shutting down gracefully");
-    server.close(() => {
-        console.log("Process terminated");
-        process.exit(0);
-    });
-});
+        // Graceful shutdown
+        process.on("SIGTERM", () => {
+            console.log("SIGTERM received, shutting down gracefully");
+            server.close(() => {
+                console.log("Process terminated");
+                process.exit(0);
+            });
+        });
+
+        process.on("SIGINT", () => {
+            console.log("SIGINT received, shutting down gracefully");
+            server.close(() => {
+                console.log("Process terminated");
+                process.exit(0);
+            });
+        });
+    } catch (error) {
+        logger.error("Failed to start server", {
+            error: error instanceof Error ? error.message : "Unknown error",
+        });
+        process.exit(1);
+    }
+}
+
+startServer();
 
 export default app;

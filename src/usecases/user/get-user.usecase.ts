@@ -1,16 +1,16 @@
 import { IUseCase, UseCaseResult } from "../../interfaces/usecase.interface";
-import { IPaginatedRepository } from "../../interfaces/repository.interface";
 import { User } from "../../entities/user.entity";
+import { getUserRepository } from "../../repositories/factory";
 import { logger } from "../../utils/logger";
 
 export interface GetUserRequest {
-    id: string;
+    id: number;
 }
 
 export class GetUserUseCase
     implements IUseCase<GetUserRequest, UseCaseResult<User>>
 {
-    constructor(private userRepository: IPaginatedRepository<User>) {}
+    private userRepository = getUserRepository();
 
     async execute(request: GetUserRequest): Promise<UseCaseResult<User>> {
         try {
@@ -28,15 +28,11 @@ export class GetUserUseCase
                 };
             }
 
-            // Remove sensitive data before returning
-            // eslint-disable-next-line no-unused-vars
-            const { password: _password, ...userWithoutPassword } = user;
-
             logger.info("User retrieved successfully", { userId: request.id });
 
             return {
                 success: true,
-                data: userWithoutPassword as User,
+                data: user,
             };
         } catch (error) {
             logger.error("Error getting user", { error, userId: request.id });
@@ -46,10 +42,6 @@ export class GetUserUseCase
                 error: {
                     message: "Failed to get user",
                     code: "INTERNAL_ERROR",
-                    details:
-                        error instanceof Error
-                            ? error.message
-                            : "Unknown error",
                 },
             };
         }

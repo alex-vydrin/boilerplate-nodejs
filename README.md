@@ -96,7 +96,7 @@ src/
 
 - `GET /health` - Application health status
 
-### Users
+### User
 
 - `GET /users` - List users with pagination and filters
 - `POST /users` - Create a new user

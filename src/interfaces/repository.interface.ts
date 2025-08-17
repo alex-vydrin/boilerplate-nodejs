@@ -1,10 +1,12 @@
+import { User } from "../entities/user.entity";
+
 // Base repository interface
 export interface IBaseRepository<T> {
-    findById(id: string): Promise<T | null>;
+    findById(id: number): Promise<T | null>;
     findAll(): Promise<T[]>;
     create(data: Partial<T>): Promise<T>;
-    update(id: string, data: Partial<T>): Promise<T | null>;
-    delete(id: string): Promise<boolean>;
+    update(id: number, data: Partial<T>): Promise<T | null>;
+    delete(id: number): Promise<boolean>;
 }
 
 // Pagination interface
@@ -30,6 +32,10 @@ export interface IPaginatedRepository<T> extends IBaseRepository<T> {
     findWithPagination(
         options: IPaginationOptions,
     ): Promise<IPaginatedResult<T>>;
-    findByField(field: keyof T, value: any): Promise<T[]>;
-    findByFilters(filters: any): Promise<T[]>;
+    findByFilters(filters: unknown): Promise<T[]>;
+}
+
+// User-specific repository interface
+export interface IUserRepository extends IPaginatedRepository<User> {
+    findByEmail(email: string): Promise<User | null>;
 }

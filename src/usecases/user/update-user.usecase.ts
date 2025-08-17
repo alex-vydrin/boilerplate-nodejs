@@ -2,20 +2,20 @@ import {
     IUseCaseWithValidation,
     UseCaseResult,
 } from "../../interfaces/usecase.interface";
-import { IPaginatedRepository } from "../../interfaces/repository.interface";
-import { User, UpdateUserRequest } from "../../entities/user.entity";
+import { User, UpdateUserParams } from "../../entities/user.entity";
+import { getUserRepository } from "../../repositories/factory";
 import { logger } from "../../utils/logger";
 
 export interface UpdateUserUseCaseRequest {
-    id: string;
-    data: UpdateUserRequest;
+    id: number;
+    data: UpdateUserParams;
 }
 
 export class UpdateUserUseCase
     implements
         IUseCaseWithValidation<UpdateUserUseCaseRequest, UseCaseResult<User>>
 {
-    constructor(private userRepository: IPaginatedRepository<User>) {}
+    private userRepository = getUserRepository();
 
     async validate(request: UpdateUserUseCaseRequest): Promise<boolean> {
         const { id, data } = request;
@@ -34,14 +34,10 @@ export class UpdateUserUseCase
             }
 
             // Check if email is already taken by another user
-            const usersWithEmail = await this.userRepository.findByField(
-                "email",
+            const userWithEmail = await this.userRepository.findByEmail(
                 data.email,
             );
-            const emailTakenByOther = usersWithEmail.some(
-                (user) => user.id !== id,
-            );
-            if (emailTakenByOther) {
+            if (userWithEmail && userWithEmail.id !== id) {
                 return false;
             }
         }
@@ -87,15 +83,11 @@ export class UpdateUserUseCase
                 };
             }
 
-            // Remove sensitive data before returning
-            // eslint-disable-next-line no-unused-vars
-            const { password: _password, ...userWithoutPassword } = updatedUser;
-
             logger.info("User updated successfully", { userId: id });
 
             return {
                 success: true,
-                data: userWithoutPassword as User,
+                data: updatedUser,
             };
         } catch (error) {
             logger.error("Error updating user", { error, userId: request.id });
@@ -105,10 +97,6 @@ export class UpdateUserUseCase
                 error: {
                     message: "Failed to update user",
                     code: "INTERNAL_ERROR",
-                    details:
-                        error instanceof Error
-                            ? error.message
-                            : "Unknown error",
                 },
             };
         }

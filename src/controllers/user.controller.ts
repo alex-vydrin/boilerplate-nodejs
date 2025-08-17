@@ -1,51 +1,39 @@
 import { Request, Response } from "express";
-import { CreateUserUseCase } from "../usecases/user/create-user.usecase";
-import { GetUserUseCase } from "../usecases/user/get-user.usecase";
-import { ListUsersUseCase } from "../usecases/user/list-users.usecase";
-import { UpdateUserUseCase } from "../usecases/user/update-user.usecase";
-import { DeleteUserUseCase } from "../usecases/user/delete-user.usecase";
-import { userRepository } from "../repositories/user.repository";
+import { UserService } from "../services/user.service";
 import { logger } from "../utils/logger";
+import { UserFilters } from "../entities/user.entity";
 
 export class UserController {
-    private createUserUseCase: CreateUserUseCase;
-    private getUserUseCase: GetUserUseCase;
-    private listUsersUseCase: ListUsersUseCase;
-    private updateUserUseCase: UpdateUserUseCase;
-    private deleteUserUseCase: DeleteUserUseCase;
+    private userService: UserService;
 
     constructor() {
-        this.createUserUseCase = new CreateUserUseCase(userRepository);
-        this.getUserUseCase = new GetUserUseCase(userRepository);
-        this.listUsersUseCase = new ListUsersUseCase(userRepository);
-        this.updateUserUseCase = new UpdateUserUseCase(userRepository);
-        this.deleteUserUseCase = new DeleteUserUseCase(userRepository);
+        this.userService = new UserService();
     }
 
     async createUser(req: Request, res: Response): Promise<void> {
         try {
-            const { email, name, password } = req.body;
+            const { email, name } = req.body;
 
-            const result = await this.createUserUseCase.execute({
-                email,
-                name,
-                password,
-            });
-
-            if (!result.success) {
-                res.status(400).json(result);
+            if (!email || !name) {
+                res.status(400).json({
+                    success: false,
+                    error: "Email and name are required",
+                });
                 return;
             }
 
-            res.status(201).json(result);
+            const user = await this.userService.createUser({ email, name });
+
+            res.status(201).json({
+                success: true,
+                data: user,
+            });
         } catch (error) {
-            logger.error("Controller error in createUser", { error });
+            logger.error("Error creating user", { error });
+
             res.status(500).json({
                 success: false,
-                error: {
-                    message: "Internal server error",
-                    code: "INTERNAL_ERROR",
-                },
+                error: "Failed to create user",
             });
         }
     }
@@ -57,60 +45,85 @@ export class UserController {
             if (!id) {
                 res.status(400).json({
                     success: false,
-                    error: {
-                        message: "User ID is required",
-                        code: "MISSING_ID",
-                    },
+                    error: "User ID is required",
                 });
                 return;
             }
 
-            const result = await this.getUserUseCase.execute({ id });
-
-            if (!result.success) {
-                res.status(404).json(result);
+            const userId = parseInt(id, 10);
+            if (isNaN(userId)) {
+                res.status(400).json({
+                    success: false,
+                    error: "Invalid user ID",
+                });
                 return;
             }
 
-            res.json(result);
+            const user = await this.userService.getUserById(userId);
+
+            res.status(200).json({
+                success: true,
+                data: user,
+            });
         } catch (error) {
-            logger.error("Controller error in getUser", { error });
+            logger.error("Error getting user", { error });
+
+            if (error instanceof Error && error.message === "User not found") {
+                res.status(404).json({
+                    success: false,
+                    error: "User not found",
+                });
+                return;
+            }
+
             res.status(500).json({
                 success: false,
-                error: {
-                    message: "Internal server error",
-                    code: "INTERNAL_ERROR",
-                },
+                error: "Failed to get user",
             });
         }
     }
 
     async listUsers(req: Request, res: Response): Promise<void> {
         try {
-            const { page, limit, sortBy, sortOrder, isActive, email, name } =
-                req.query;
+            const {
+                page = "1",
+                limit = "10",
+                sortBy = "createdAt",
+                sortOrder = "desc",
+                isActive,
+                email,
+                name,
+            } = req.query;
 
-            const result = await this.listUsersUseCase.execute({
-                page: page ? parseInt(page as string) : undefined,
-                limit: limit ? parseInt(limit as string) : undefined,
+            const filters: UserFilters = {};
+            if (isActive !== undefined) {
+                filters.isActive = isActive === "true";
+            }
+            if (email && typeof email === "string") {
+                filters.email = email;
+            }
+            if (name) {
+                filters.name = name as string;
+            }
+
+            const result = await this.userService.listUsers({
+                page: page ? parseInt(page as string) : 1,
+                limit: limit ? parseInt(limit as string) : 10,
                 sortBy: sortBy as string,
                 sortOrder: sortOrder as "asc" | "desc",
-                filters: {
-                    isActive: isActive ? isActive === "true" : undefined,
-                    email: email as string | undefined,
-                    name: name as string | undefined,
-                },
+                ...(Object.keys(filters).length > 0 && { filters }),
             });
 
-            res.json(result);
+            res.status(200).json({
+                success: true,
+                data: result,
+            });
         } catch (error) {
-            logger.error("Controller error in listUsers", { error });
+            logger.error("Error listing users", { error });
+
             res.status(500).json({
                 success: false,
-                error: {
-                    message: "Internal server error",
-                    code: "INTERNAL_ERROR",
-                },
+                error: "Failed to list users",
             });
         }
     }
@@ -123,33 +136,40 @@ export class UserController {
             if (!id) {
                 res.status(400).json({
                     success: false,
-                    error: {
-                        message: "User ID is required",
-                        code: "MISSING_ID",
-                    },
+                    error: "User ID is required",
                 });
                 return;
             }
 
-            const result = await this.updateUserUseCase.execute({
-                id,
-                data: updateData,
-            });
-
-            if (!result.success) {
-                res.status(400).json(result);
+            const userId = parseInt(id, 10);
+            if (isNaN(userId)) {
+                res.status(400).json({
+                    success: false,
+                    error: "Invalid user ID",
+                });
                 return;
             }
 
-            res.json(result);
+            const user = await this.userService.updateUser(userId, updateData);
+
+            res.status(200).json({
+                success: true,
+                data: user,
+            });
         } catch (error) {
-            logger.error("Controller error in updateUser", { error });
+            logger.error("Error updating user", { error });
+
+            if (error instanceof Error && error.message === "User not found") {
+                res.status(404).json({
+                    success: false,
+                    error: "User not found",
+                });
+                return;
+            }
+
             res.status(500).json({
                 success: false,
-                error: {
-                    message: "Internal server error",
-                    code: "INTERNAL_ERROR",
-                },
+                error: "Failed to update user",
             });
         }
     }
@@ -161,30 +181,40 @@ export class UserController {
             if (!id) {
                 res.status(400).json({
                     success: false,
-                    error: {
-                        message: "User ID is required",
-                        code: "MISSING_ID",
-                    },
+                    error: "User ID is required",
                 });
                 return;
             }
 
-            const result = await this.deleteUserUseCase.execute({ id });
-
-            if (!result.success) {
-                res.status(404).json(result);
+            const userId = parseInt(id, 10);
+            if (isNaN(userId)) {
+                res.status(400).json({
+                    success: false,
+                    error: "Invalid user ID",
+                });
                 return;
             }
 
-            res.json(result);
+            await this.userService.deleteUser(userId);
+
+            res.status(200).json({
+                success: true,
+                message: "User deleted successfully",
+            });
         } catch (error) {
-            logger.error("Controller error in deleteUser", { error });
+            logger.error("Error deleting user", { error });
+
+            if (error instanceof Error && error.message === "User not found") {
+                res.status(404).json({
+                    success: false,
+                    error: "User not found",
+                });
+                return;
+            }
+
             res.status(500).json({
                 success: false,
-                error: {
-                    message: "Internal server error",
-                    code: "INTERNAL_ERROR",
-                },
+                error: "Failed to delete user",
             });
         }
     }
