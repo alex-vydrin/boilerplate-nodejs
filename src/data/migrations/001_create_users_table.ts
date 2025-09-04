@@ -1,5 +1,5 @@
 import { Knex } from "knex";
-import { createUpdateTrigger } from "../utils/triggers";
+import { createUpdateTrigger } from "../../database/utils/triggers";
 
 export async function up(knex: Knex): Promise<void> {
     await knex.schema.createTable("User", (table) => {

@@ -1,92 +1,86 @@
 import {
-    User,
-    CreateUserParams,
-    UpdateUserParams,
+  User,
+  CreateUserParams,
+  UpdateUserParams,
 } from "../entities/user.entity";
-import { CreateUserUseCase } from "../usecases/user/create-user.usecase";
-import { GetUserUseCase } from "../usecases/user/get-user.usecase";
-import { UpdateUserUseCase } from "../usecases/user/update-user.usecase";
-import { DeleteUserUseCase } from "../usecases/user/delete-user.usecase";
-import {
-    ListUsersParams,
-    ListUsersUseCase,
-} from "../usecases/user/list-users.usecase";
 import { logger } from "../utils/logger";
-import { IPaginatedResult } from "../interfaces/repository.interface";
+import { NotFoundError } from "../types/errors";
+import { IApiContext } from "../interfaces/dependency.interface";
 
 export class UserService {
-    private createUserUseCase: CreateUserUseCase;
-    private getUserUseCase: GetUserUseCase;
-    private updateUserUseCase: UpdateUserUseCase;
-    private deleteUserUseCase: DeleteUserUseCase;
-    private listUsersUseCase: ListUsersUseCase;
+  constructor(private readonly apiContext: IApiContext) {}
 
-    constructor() {
-        this.createUserUseCase = new CreateUserUseCase();
-        this.getUserUseCase = new GetUserUseCase();
-        this.updateUserUseCase = new UpdateUserUseCase();
-        this.deleteUserUseCase = new DeleteUserUseCase();
-        this.listUsersUseCase = new ListUsersUseCase();
+  async createUser(userData: CreateUserParams): Promise<User> {
+    logger.info("UserService: Creating user", userData);
+
+    const result =
+      await this.apiContext.useCases.user.createUser.execute(userData);
+
+    if (!result.success || !result.data) {
+      throw new Error(result.error?.message || "Failed to create user");
     }
 
-    async createUser(userData: CreateUserParams): Promise<User> {
-        logger.info("UserService: Creating user", userData);
+    return result.data;
+  }
 
-        const result = await this.createUserUseCase.execute(userData);
+  async getUserById(id: number): Promise<User> {
+    logger.info("UserService: Getting user by ID", { userId: id });
 
-        if (!result.success || !result.data) {
-            throw new Error(result.error?.message || "Failed to create user");
-        }
+    const result = await this.apiContext.useCases.user.getUser.execute({ id });
 
-        return result.data;
+    if (!result.success || !result.data) {
+      if (result.error?.message === "User not found") {
+        throw new NotFoundError("User not found");
+      }
+      throw new Error(result.error?.message || "Failed to get user");
     }
 
-    async getUserById(id: number): Promise<User> {
-        logger.info("UserService: Getting user by ID", { userId: id });
+    return result.data;
+  }
 
-        const result = await this.getUserUseCase.execute({ id });
+  async listUsers(options: any): Promise<any> {
+    logger.info("UserService: Listing users", options);
 
-        if (!result.success || !result.data) {
-            throw new Error(result.error?.message || "Failed to get user");
-        }
+    const result =
+      await this.apiContext.useCases.user.listUsers.execute(options);
 
-        return result.data;
+    if (!result.success || !result.data) {
+      throw new Error(result.error?.message || "Failed to list users");
     }
 
-    async listUsers(options: ListUsersParams): Promise<IPaginatedResult<User>> {
-        logger.info("UserService: Listing users", options);
+    return result.data;
+  }
 
-        const result = await this.listUsersUseCase.execute(options);
+  async updateUser(id: number, updateData: UpdateUserParams): Promise<User> {
+    logger.info("UserService: Updating user", { userId: id, updateData });
 
-        if (!result.success || !result.data) {
-            throw new Error(result.error?.message || "Failed to list users");
-        }
+    const result = await this.apiContext.useCases.user.updateUser.execute({
+      id,
+      data: updateData,
+    });
 
-        return result.data;
+    if (!result.success || !result.data) {
+      if (result.error?.message === "User not found") {
+        throw new NotFoundError("User not found");
+      }
+      throw new Error(result.error?.message || "Failed to update user");
     }
 
-    async updateUser(id: number, updateData: UpdateUserParams): Promise<User> {
-        logger.info("UserService: Updating user", { userId: id, updateData });
+    return result.data;
+  }
 
-        const result = await this.updateUserUseCase.execute({
-            id,
-            data: updateData,
-        });
+  async deleteUser(id: number): Promise<void> {
+    logger.info("UserService: Deleting user", { userId: id });
 
-        if (!result.success || !result.data) {
-            throw new Error(result.error?.message || "Failed to update user");
-        }
+    const result = await this.apiContext.useCases.user.deleteUser.execute({
+      id,
+    });
 
-        return result.data;
+    if (!result.success) {
+      if (result.error?.message === "User not found") {
+        throw new NotFoundError("User not found");
+      }
+      throw new Error(result.error?.message || "Failed to delete user");
     }
-
-    async deleteUser(id: number): Promise<void> {
-        logger.info("UserService: Deleting user", { userId: id });
-
-        const result = await this.deleteUserUseCase.execute({ id });
-
-        if (!result.success) {
-            throw new Error(result.error?.message || "Failed to delete user");
-        }
-    }
+  }
 }

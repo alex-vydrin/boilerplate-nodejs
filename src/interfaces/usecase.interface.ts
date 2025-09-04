@@ -1,32 +1,38 @@
 // Base usecase interface
-export interface IUseCase<TRequest, TResponse> {
-    execute(request: TRequest): Promise<TResponse>;
+export interface IUseCase<TRequest, TResult> {
+  execute(request: TRequest): Promise<UseCaseResult<TResult>>;
 }
 
 // Usecase with validation
-export interface IUseCaseWithValidation<TRequest, TResponse>
-    extends IUseCase<TRequest, TResponse> {
-    validate(request: TRequest): Promise<boolean>;
+export interface IUseCaseWithValidation<TRequest, TResult>
+  extends IUseCase<TRequest, TResult> {
+  validate(request: TRequest): Promise<boolean>;
+}
+
+// Usecase with pre-execute
+export interface IUseCaseWithPreExecute<TRequest, TResult>
+  extends IUseCase<TRequest, TResult> {
+  preExecute(request: TRequest): Promise<UseCaseResult<TRequest> | null>;
 }
 
 // Usecase result wrapper
 export interface UseCaseResult<T> {
-    success: boolean;
-    data?: T;
-    error?: {
-        message: string;
-        code?: string;
-    };
+  success: boolean;
+  data?: T;
+  error?: {
+    message: string;
+    code: string;
+  };
 }
 
 // Base request/response types
 export interface BaseRequest {
-    userId?: string;
-    [key: string]: unknown;
+  userId?: string;
+  [key: string]: unknown;
 }
 
 export interface BaseResponse {
-    success: boolean;
-    message?: string;
-    [key: string]: unknown;
+  success: boolean;
+  message?: string;
+  [key: string]: unknown;
 }

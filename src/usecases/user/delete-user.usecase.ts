@@ -1,63 +1,22 @@
-import { IUseCase, UseCaseResult } from "../../interfaces/usecase.interface";
-import { getUserRepository } from "../../repositories/factory";
+import { IUserRepository } from "../../interfaces/repository.interface";
+import { BaseUseCase } from "../base.usecase";
 import { logger } from "../../utils/logger";
 
-export interface DeleteUserRequest {
-    id: number;
-}
+export class DeleteUserUseCase extends BaseUseCase<{ id: number }, void> {
+  constructor(private readonly userRepository: IUserRepository) {
+    super();
+  }
 
-export class DeleteUserUseCase
-    implements IUseCase<DeleteUserRequest, UseCaseResult<void>>
-{
-    private userRepository = getUserRepository();
+  protected async performExecute(request: { id: number }): Promise<void> {
+    logger.info("Deleting user", { userId: request.id });
 
-    async execute(request: DeleteUserRequest): Promise<UseCaseResult<void>> {
-        try {
-            const { id } = request;
-
-            logger.info("Deleting user", { userId: id });
-
-            // Check if user exists
-            const existingUser = await this.userRepository.findById(id);
-            if (!existingUser) {
-                return {
-                    success: false,
-                    error: {
-                        message: "User not found",
-                        code: "USER_NOT_FOUND",
-                    },
-                };
-            }
-
-            // Delete user
-            const deleted = await this.userRepository.delete(id);
-
-            if (!deleted) {
-                return {
-                    success: false,
-                    error: {
-                        message: "Failed to delete user",
-                        code: "DELETE_FAILED",
-                    },
-                };
-            }
-
-            logger.info("User deleted successfully", { userId: id });
-
-            return {
-                success: true,
-                data: undefined,
-            };
-        } catch (error) {
-            logger.error("Error deleting user", { error, userId: request.id });
-
-            return {
-                success: false,
-                error: {
-                    message: "Failed to delete user",
-                    code: "INTERNAL_ERROR",
-                },
-            };
-        }
+    const existingUser = await this.userRepository.findById(request.id);
+    if (!existingUser) {
+      throw new Error("User not found");
     }
+
+    await this.userRepository.delete(request.id);
+
+    logger.info("User deleted successfully", { userId: request.id });
+  }
 }

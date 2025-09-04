@@ -13,12 +13,12 @@ const createKnexConfig = () => {
             max: environment === "production" ? 20 : 10,
         },
         migrations: {
-            directory: "./src/database/knex-migrations",
-            extension: "ts",
+            directory: "./dist/database/knex-migrations",
+            extension: "js",
         },
         seeds: {
-            directory: "./src/database/seeds",
-            extension: "ts",
+            directory: "./dist/database/seeds",
+            extension: "js",
         },
     };
 

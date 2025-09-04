@@ -44,11 +44,36 @@ app.use(errorHandler);
 // Initialize database and start server
 async function startServer() {
     try {
-        // Test database connection
+        // Test database connection and run migrations
         if (config.DATABASE_URL) {
             const dbConnected = await testKnexConnection();
             if (dbConnected) {
                 logger.info("Database initialized successfully");
+
+                // Run migrations in production
+                if (config.NODE_ENV === "production") {
+                    try {
+                        logger.info("Running database migrations...");
+                        const { execSync } = require("child_process");
+                        execSync("yarn migrate", {
+                            stdio: "inherit",
+                            timeout: 60000, // 60 second timeout
+                        });
+                        logger.info(
+                            "Database migrations completed successfully",
+                        );
+                    } catch (error) {
+                        logger.warn(
+                            "Database migrations failed, but continuing...",
+                            {
+                                error:
+                                    error instanceof Error
+                                        ? error.message
+                                        : "Unknown error",
+                            },
+                        );
+                    }
+                }
             } else {
                 logger.warn(
                     "Database connection failed, using in-memory storage",
@@ -59,11 +84,11 @@ async function startServer() {
         }
 
         // Start server
-        const server = app.listen(config.PORT, () => {
+        const server = app.listen(config.PORT, "0.0.0.0", () => {
             console.log(`🚀 Server running on port ${config.PORT}`);
             console.log(`🌍 Environment: ${config.NODE_ENV}`);
             console.log(
-                `📊 Health check available at http://localhost:${config.PORT}/health`,
+                `📊 Health check available at http://0.0.0.0:${config.PORT}/health`,
             );
         });
 
